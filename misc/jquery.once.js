@@ -1,0 +1,1 @@
+(function(c){var a={},b=0;c.fn.once=function(g,e){if(typeof g!="string"){if(!(g in a)){a[g]=++b}if(!e){e=g}g="jquery-once-"+a[g]}var d=g+"-processed";var f=this.not("."+d).addClass(d);return c.isFunction(e)?f.each(e):f};c.fn.removeOnce=function(g,e){var d=g+"-processed";var f=this.filter("."+d).removeClass(d);return c.isFunction(e)?f.each(e):f}})(jQuery);

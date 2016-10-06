@@ -1,0 +1,361 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function custom_user_search_menu() {
+  $items = array();
+  $items['custom/user-search-form'] = array(
+    'title' => 'Add User to ride',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('user_search'),
+    'access callback' => TRUE,
+  );
+   $items['custom/user/search/callback/%'] = array(
+    'page callback' => 'user_search_callback',
+    'access callback' => TRUE,
+    'access arguments' => array(4),
+    'type' => MENU_CALLBACK,
+  );
+  // Autocomplete examples.
+  $items['custom/userAdd/%'] = array(
+    'page callback' => 'addUserRide',
+    'access callback' => TRUE,
+    'access arguments' => array(1),
+    'type' => MENU_CALLBACK,
+  );
+  $items['acceptedUser/%'] = array(
+    'page callback' => 'acceptedUser',
+    'access callback' => TRUE,
+    'access arguments' => array(1),
+    'type' => MENU_CALLBACK,
+  );
+    $items['chargeSharedRide/%'] = array(
+    'title' => 'Charge Users',
+    'page callback' => 'Charge_customers',
+    'access callback' => TRUE,
+    'access arguments' => array(1),
+    'type' => MENU_CALLBACK,
+  );
+   return $items;
+}
+/*
+ *Charge Customers in shared Ride
+ *
+ */
+function Charge_customers($nid){
+$node = node_load(arg(1));
+//echo "<pre>";print_r($node);
+//if(!empty($node->field_accepted_users)){
+ $query=db_query("SELECT * from commerce_line_item where order_id=".$node->field_order['und'][0]['target_id']);
+   $result=$query->fetchAll();
+   $order=commerce_order_load($node->field_order['und'][0]['target_id']);
+  // Check the distance and car type and charge customer accordingly
+   $car_type = $node->field_car_type['und'][0]['tid'];
+   $order=commerce_order_load($node->field_order['und'][0]['target_id']);
+   //echo "<pre>";print_r($order);
+  // charge an order with card on file
+   $charge = commerce_payment_order_balance($order);
+   	$ride_users = array();
+   	$ride_users[0] = $node->uid;
+   if(!empty($node->field_accepted_users['und'][0]['value'])){
+   // If shared ride remove all products and add shared ride product with the fixed amount
+ //  commerce_cart_order_product_line_item_delete($order, $result[0]->line_item_id);
+ //  $product=commerce_product_load_by_sku('shared-ride');
+//   $line_item = commerce_product_line_item_new($product, 1, $node->field_order['und'][0]['target_id']);
+ //  commerce_cart_product_add($node->uid,$line_item);
+   
+   //Extract ride users
+   	$users = rtrim($node->field_accepted_users['und'][0]['value'], ","); //Users String
+   	$userArr = explode(',',$users); //User name array
+   	// echo "<pre>RIDE USERS";print_r($userArr);
+  	for($i=0;$i<count($userArr);$i++){
+	   	$query=db_query("SELECT uid, mail from users where name like '".$userArr[$i]."'");
+	   	$user = $query->fetchAll();
+	   	$ride_users[$i+1] = $user[0]->uid;
+   	}
+     }
+   echo "Total amount".$charge['amount'];
+   echo "Total users ".$total_users = count($ride_users);
+ $amt_per_usr = $charge['amount'] / $total_users;
+    echo "<pre>RIDE USERS";print_r($ride_users);
+    echo '---------------------------------------';
+    $charge['amount'] = round($amt_per_usr); // divide by 100 To check amount in dollar and cents
+    echo "Charge:".$charge['amount'];   
+    echo "<pre>CHARGE";print_r($charge);
+    echo '---------------------------------------';
+
+     if(!empty($node->field_accepted_users['und'][0]['value'])){
+     
+     //for($i=0;$i<$total_users;$i++){
+   	// Add order to shared user
+   	commerce_cart_order_product_line_item_delete($order, $result[0]->line_item_id);
+	$product=commerce_product_load_by_sku('shared-ride');
+	$line_item = commerce_product_line_item_new($product, 1, $node->field_order['und'][0]['target_id']);
+	$line_item->commerce_unit_price['und']['0']['amount']=$charge['amount'];
+    	$line_item->commerce_unit_price['und']['0']['data']['components']['0']['price']['amount']=$charge['amount'];
+    	commerce_line_item_save($line_item);
+	//echo "<pre>";print_r($line_item);die;
+	commerce_cart_product_add($node->uid,$line_item);
+   	//}
+     }
+        
+    echo "<pre>ORDER";print_r($order);
+    echo '---------------------------------------';
+     $card_data = array();
+//$order->commerce_order_total['und'][0]['amount'] = $charge['amount'];
+//$order->commerce_order_total['und'][0]['data']['components'][0]['price']['amount'] = $charge['amount'];
+//commerce_order_save($order);
+   for($i=0;$i<$total_users;$i++){
+   	$query=db_query("SELECT * from commerce_cardonfile where uid=".$ride_users[$i]);
+  	$card_data[$i]=$query->fetchAll();
+
+  	}
+ echo "<pre>CARD DATA";print_r($card_data);
+echo '---------------------------------------';
+   for($i=0;$i<$total_users;$i++){
+     	$charge_response = commerce_cardonfile_order_charge_card($order,$charge=array(),$card_data[$i]);
+  	echo "<pre>Charge Response";print_r($charge_response);
+  	 
+	 }
+// }
+commerce_checkout_complete($order);
+  drupal_goto("<front>");
+}
+
+
+
+
+
+/*
+ * Ajax response for all the users listing
+ */
+function acceptedUser($nid){
+$node = node_load(arg(1));
+$content="";
+//echo arg(1);die;
+$accepted_users = rtrim($node->field_accepted_users['und'][0]['value'], ",");
+//echo $accepted_users;die;
+if($node->field_accepted_users['und'][0]['value'] != ""){
+$AcceptedUsers = explode(',',$accepted_users);
+$requested_users = rtrim($node->field_share_ride_users['und'][0]['value'], ",");
+$RequestedUsers = explode(',',$requested_users);
+//$RequestedUsers = explode(',',$node->field_share_ride_users['und'][0]['value']);
+$a1 =array_intersect($AcceptedUsers,$RequestedUsers);
+$a2 =array_diff($RequestedUsers,$AcceptedUsers);
+foreach($a1 as $accepted){
+$content .= "<span class='accepted'>".$accepted."</span><br>";
+}
+foreach($a2 as $notaccepted){
+$content .= "<span class='notaccepted'>".$notaccepted."</span><br>";
+}}
+//if(count($a1)){
+//$json = "<span class='accepted'>".implode("<br>",$a1)."</span>";
+//}
+//if(count($a2)){
+//$json2 = "<span class='notaccepted'>".implode("<br>",$a2)."</span>";
+//}
+//$accepted = .$json);
+//$rejected = str_replace(",", "yy<br>", $json2);
+echo $content; die;
+}
+/**
+* Implements hook_block_info().
+*/
+function custom_user_search_block_info() {
+  $blocks = array();
+  $blocks['custom_user_search_add_user'] = array(
+    'info' => t('Custom Search User'),
+  );
+  return $blocks;
+}
+/**
+* Implements hook_block_view().
+*/
+function custom_user_search_block_view($delta = '') {
+  $block = array();
+  switch ($delta) {
+    case 'custom_user_search_add_user':
+      $block['subject'] = '';
+      $block['content'] = _custom_user_search_add_user_CONTENT();
+      break;
+  }
+  return $block;
+}
+function _custom_user_search_add_user_CONTENT() {
+  $output = render(drupal_get_form('user_search'));
+  $output .= "<div class='sharedUser' style='float:right;margin-top: -157px;'></div>";
+  return $output;
+}
+
+/**
+ * A simple autocomplete form which just looks up usernames in the user table.
+ *
+ * @param array $form
+ *   Form API form.
+ * @param array $form_state
+ *   Form API form.
+ *
+ * @return array
+ *   Form array.
+ */
+function user_search($form, &$form_state) {
+  $form = array();
+       
+//        $node = node_load(arg(1));
+	//$acceptedUsers = $node->field_share_ride_users['und'][0]['value'];
+
+ /* $form['info'] = array(
+    '#markup' => '<div></div>',
+  ); */
+  $form['user'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Enter Username.'),
+    // The autocomplete path is provided in hook_menu in ajax_example.module.
+    '#autocomplete_path' => 'custom/user/search/callback/'.arg(1),
+  );
+  $form['nid'] = array(
+    '#type' => 'hidden',
+    '#value' => arg(1),
+   );
+//   $form['accepted'] = array(
+ //   '#type' => 'textfield',
+ //   '#value' => $acceptedUsers,
+ // );
+
+    $form['submit'] = array(
+    '#type' => 'submit',
+    '#submit' => array('add_user'),
+ //   '#ajax' => array(
+ //     'callback' => 'add_user',
+    //  'wrapper' => 'addUser',
+ //   ),
+    '#value' => t('Share'),
+  );
+/*    $form['addUser'] = array(
+    '#type' => 'markup',
+    '#prefix' => '<div id="addUser">',
+    '#suffix' => '</div>',
+  ); */
+  return $form; 
+}
+/**
+  *Add User to ride
+  *
+  */
+/**
+ * Submit add_user save action.
+ */
+function add_user($form, &$form_state) {
+global $user;
+$current_user = $user->name;
+$nid = $form_state['values']['nid'];// current node ID/node/' . $nid . '
+$node = node_load($nid);
+$user_name = $form_state['values']['user'];
+//echo "<pre>";print_r($node);die;
+//$element = $form['addUser'];
+//$element['#markup'] = $user_name;
+$AcceptedUsers = explode(',',$node->field_accepted_users['und'][0]['value']);
+$pos = strpos($node->field_share_ride_users['und'][0]['value'], ','.$user_name.',');
+if(in_array($user_name, $AcceptedUsers)){
+return;
+} elseif ($pos === false) {
+$node->field_share_ride_users['und'][0]['value'] .= $user_name . ",";
+node_save($node);
+}
+
+$value = array();   
+$result = db_select('users')
+      	->fields('users', array('uid'))
+      	->condition('name', db_like($user_name), 'LIKE')
+      	->execute();
+	foreach ($result as $reciver) {
+    	  $value[] = $reciver->uid;
+	} 
+$uid = $value[0];	
+	/*
+	* Send Ride Request to user with node.js
+	*/
+    $subject = t("Ride Request");
+    $content = t( '<div>'. ucfirst($current_user) . ' sent you a ride request.Please accept to share ride.<br>');
+    $content .= '<a class="button success" href="/custom/userAdd/'. $nid .'">' . t('Accept');
+    $content .=  '</a>';
+    $content .= '<audio src="https://www.black.cr/RideRequest.mp3" autoplay></audio>';
+    $content .= '<a class="button alert reject" href="/node/add/ride-booker">' . t('Reject');
+    $content .=  '</a>';
+    $content .= '</div>';
+    $body = $content;
+     $path = '/' . drupal_get_path('module', 'custom_pickup');
+    $key = 'vUKtuYvHt3yT8CDBVu3QHq6IB92MwL6w'; // this should be grabbed from a config
+   // require_once DRUPAL_ROOT.$path.'/calback.php';
+    $callback = DRUPAL_ROOT.$path . '/callback.php?nid=' . $nid . '&uid=' . $uid . '&rid=8&key=' . $key;
+    $delay = 60000;
+   // echo "uid " . $uid. "<br> Subject " .$subject . "<br>body " . $body . "<br>callback ".$callback . "<br>delay ".$delay;die;
+   nodejs_send_user_message_multiple_custom($nid ,$uid, $subject, $body);
+ // nodejs_send_user_message($uid, $subject, $body, $callback, $delay);
+  return;
+}
+// Add user to current ride
+function addUserRide($nid) {
+$node = node_load(arg(2));
+global $user;
+echo "<pre>";print_r($user->name);
+//echo "<pre>";print_r($node);die;
+$node->field_accepted_users['und'][0]['value'] .= $user->name . ",";
+node_save($node);
+// Add order to shared user
+//$product=commerce_product_load_by_sku('shared-ride');
+//$line_item = commerce_product_line_item_new($product, 1, $node->field_order['und'][0]['target_id']);
+//commerce_cart_product_add($node->uid,$line_item);
+// echo "<pre>";print_r($node);die;
+drupal_goto('node/' . arg(2));
+die;
+}
+/**
+ * This is just a copy of user_autocomplete().
+ *
+ * It works simply by searching usernames (and of course in Drupal usernames
+ * are unique, so can be used for identifying a record.)
+ *
+ * The returned $matches array has
+ * * key: string which will be displayed once the autocomplete is selected
+ * * value: the value which will is displayed in the autocomplete pulldown.
+ *
+ * In the simplest cases (see user_autocomplete()) these are the same, and
+ * nothing needs to be done. However, more more complicated autocompletes
+ * require more work. Here we demonstrate the difference by displaying the UID
+ * along with the username in the dropdown.
+ *
+ * In the end, though, we'll be doing something with the value that ends up in
+ * the textfield, so it needs to uniquely identify the record we want to access.
+ * This is demonstrated in ajax_example_unique_autocomplete().
+ *
+ * @param string $string
+ *   The string that will be searched.
+ */
+function user_search_callback($string) {
+//Load node
+$node = node_load(arg(4));
+$AcceptedUsers = explode(',',$node->field_accepted_users['und'][0]['value']);
+
+  $matches = array();
+  if ($string) {
+    	global $user;
+ 	$current_user = $user->name;
+    $query=db_select('users','u');
+    $query->join('users_roles','r','u.uid = r.uid');
+    $query->condition('u.name', db_like($string) . '%', 'LIKE')
+    ->condition('r.rid', '5' , 'LIKE')
+    ->condition('u.name', $current_user , '<>')
+    ->condition('u.name', $AcceptedUsers, 'NOT IN')
+    ->fields('u',array('uid','name'))
+    ->range(0, 10);
+    $result= $query->execute();
+    foreach($result as $record){
+                 $matches[$record->name] = check_plain($record->name);
+        }
+  drupal_json_output($matches);
+}
+}
+
+?>

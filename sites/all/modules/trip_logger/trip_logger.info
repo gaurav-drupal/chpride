@@ -1,0 +1,7 @@
+name = Trip logger
+description = 'Logs a trip as a series of waypoints with speed, altitude, location, and time."
+package = "Geolocatoin"
+core = "7.x"
+version = "7.x-1.0"
+
+

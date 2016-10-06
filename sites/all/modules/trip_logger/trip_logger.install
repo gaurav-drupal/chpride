@@ -1,0 +1,87 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the debug module.
+ */
+
+
+/**
+ * Implements hook_schema().
+ */
+function trip_logger_schema() {
+  $schema = array();
+
+  $schema['trip_logger'] = array(
+    'fields' => array(
+      'eid' => array(
+        'description' => 'The entity ID',
+        'type' => 'serial'
+      ),
+      'nid' => array(
+        'description' => 'The related NID',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ),
+      'time_stamp' => array(
+        'description' => 'The unix time stamp of the data saved',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ),
+      'accuracy' => array(
+        'description' => 'Accuracy in meters',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ),
+      'speed' => array(
+        'description' => 'Velocity in m/s',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'altitude' => array(
+        'description' => 'The altitude, if the device reports it',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'alt_accuracy' => array(
+        'description' => 'Plus or minus on the reported altitude (should be about twice accuracy unless something strange is going on).',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'lat' => array(
+        'description' => 'Latitude',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'lon' => array(
+        'description' => 'Longitude',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'distance' => array(
+        'description' => 'Distance since last way point.',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'delta_time' => array(
+        'description' => 'Seconds since the last way point.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array(
+      'eid',
+    ),
+    'unique key' => array(
+      'nid',
+      'speed',
+      'timestamp',
+    ),
+  );
+
+  return $schema;
+}
+

@@ -1,0 +1,8 @@
+name = Find User
+description = 'Find User For different actions with checkbox and form submit'
+package = "Custom User Search"
+core = "7.x"
+version = "7.x-1.0"
+files[] = custom_user_search/custom_user_search.module
+
+

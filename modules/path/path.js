@@ -1,0 +1,1 @@
+(function(a){Drupal.behaviors.pathFieldsetSummaries={attach:function(b){a("fieldset.path-form",b).drupalSetSummary(function(c){var d=a(".form-item-path-alias input").val();return d?Drupal.t("Alias: @alias",{"@alias":d}):Drupal.t("No alias")})}}})(jQuery);

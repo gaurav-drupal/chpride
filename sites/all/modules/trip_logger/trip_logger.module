@@ -1,0 +1,98 @@
+<?php
+/**
+ * Created by MMWD.
+ * User: Micheas Herman
+ * Email: micheas@mmwd.co
+ * Date: 6/15/13
+ * Time: 2:08 PM
+ *
+ */
+
+/**
+ * Implements hook_entity_info()
+ */
+function trip_logger_entity_info() {
+  $return = array(
+    'way_point' => array(
+      'label' => t('Way point'),
+      'plural label' => t('Way Points'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIController',
+      'module' => 'trip_logger',
+      'base table' => 'trip_logger',
+      'fieldable' => FALSE,
+      'entity keys' => array(
+        'id' => 'eid',
+      )
+    )
+  );
+  return $return;
+}
+
+/**
+ * Implements hook_entity_property_info_alter()
+ */
+function trip_logger_entity_property_info_alter(&$info){
+  $way_point = &$info['way_point']['properties'];
+  $way_point['timestamp']['type'] = 'date';
+  $way_point['nid']['type'] = 'node';
+}
+
+/**
+ * @param $way_point object
+ */
+function trip_logger_record($way_point) {
+  $nid = $way_point->nid;
+  $time_stamp = $way_point->time_stamp;
+  $accuracy = $way_point->accuracy;
+  $speed = $way_point->speed;
+  $altitude = $way_point->altitude;
+  $alt_accuracy = $way_point->alt_accuracy;
+  $lat = $way_point->lat;
+  $lon = $way_point->lon;
+  $last_point = trip_logger_get_last_point($nid);
+  if(count($last_point) === 0) {
+    $distance = 0;
+    $delta_time = 0;
+  }
+  else {
+    $distance = trip_logger_haversine_distance($lat,$lon, $last_point[0]->lat, $last_point[0]->lon);
+    $delta_time = $time_stamp - $last_point[0]->time_stamp;
+  }
+
+
+  $delta_time = abs($delta_time);
+  db_insert('trip_logger')->fields(array(
+    'nid' => $nid,
+    'time_stamp' => $time_stamp,
+    'accuracy' => $accuracy,
+    'speed' => $speed,
+    'altitude' => $altitude,
+    'alt_accuracy' => $alt_accuracy,
+    'lat' => $lat,
+    'lon' => $lon,
+    'distance' => $distance,
+    'delta_time' => $delta_time,
+    'raw_json' => json_encode($way_point)
+  ))->execute();
+  
+}
+
+function trip_logger_get_last_point($nid) {
+  $accuracy = variable_get('trip_logger_accuracy', 20);
+  $last_timestamp = db_query('select time_stamp, lat, lon from trip_logger where nid = :nid and accuracy < :accuracy order by time_stamp desc limit 0,1 ',
+    array(':nid'=>$nid, ':accuracy'=>$accuracy))->fetchAll();
+  return $last_timestamp;
+}
+
+function trip_logger_haversine_distance( $latitude_from, $longitude_from, $latitude_to, $longitude_to, $earth_radius = 3961) {
+  // convert from degrees to radians
+  $latitude_from = deg2rad($latitude_from);
+  $longitude_from = deg2rad($longitude_from);
+  $latitude_to = deg2rad($latitude_to);
+  $longitude_to = deg2rad($longitude_to);
+  $latitude_delta = $latitude_to - $latitude_from;
+  $longitude_delta = $longitude_to - $longitude_from;
+  $angle = 2 * asin(sqrt(pow(sin($latitude_delta / 2), 2)) + cos($longitude_from) * cos($latitude_to) * pow(sin($longitude_delta / 2), 2));
+  return $angle * $earth_radius;
+}

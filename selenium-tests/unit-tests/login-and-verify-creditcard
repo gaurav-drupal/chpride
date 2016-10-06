@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="http://dev.rc.gotpantheon.com/" />
+<title>Log in and verify credit card</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">Log in and verify credit card</td></tr>
+</thead><tbody>
+<tr>
+	<td>store</td>
+	<td>javascript{'customer-' + new Date().getTime()}</td>
+	<td>Customer</td>
+</tr>
+<tr>
+	<td>open</td>
+	<td>/</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Click here to signup</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=edit-name--3</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-name--3</td>
+	<td>${Customer}</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-mail</td>
+	<td>${Customer}@example.com</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-conf-mail</td>
+	<td>${Customer}@example.com</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-pass-pass1</td>
+	<td>3edc4rfv5tgb</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-pass-pass2</td>
+	<td>3edc4rfv5tgb</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=edit-profile-main-field-phone-number-und-0-value</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-profile-main-field-phone-number-und-0-value</td>
+	<td>415-555-1212</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=edit-submit--3</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>css=div.reveal-modal-bg</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-customer-profile-billing-commerce-customer-address-und-0-name-line</td>
+	<td>John Doe</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-customer-profile-billing-commerce-customer-address-und-0-thoroughfare</td>
+	<td>123 Main St</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-customer-profile-billing-commerce-customer-address-und-0-locality</td>
+	<td>San Francisco</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=edit-customer-profile-billing-commerce-customer-address-und-0-administrative-area</td>
+	<td>label=California</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-customer-profile-billing-commerce-customer-address-und-0-postal-code</td>
+	<td>94103</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=edit-continue</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-commerce-payment-payment-details-credit-card-number</td>
+	<td>4111111111111111</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=edit-commerce-payment-payment-details-credit-card-exp-year</td>
+	<td>label=13</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>id=edit-commerce-payment-payment-details-credit-card-exp-year</td>
+	<td>label=15</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>id=edit-commerce-payment-payment-details-credit-card-code</td>
+	<td>321</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>id=edit-commerce-payment-payment-details-credit-card-cardonfile-store</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>id=edit-continue</td>
+	<td></td>
+</tr>
+</tbody></table>
+</body>
+</html>

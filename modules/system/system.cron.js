@@ -1,0 +1,1 @@
+(function(a){Drupal.behaviors.cronCheck={attach:function(b,c){if(c.cronCheck||false){a("body").once("cron-check",function(){if(Math.round(new Date().getTime()/1000)>c.cronCheck){a.get(c.basePath+"system/run-cron-check")}})}}}})(jQuery);

@@ -1,0 +1,7 @@
+name = Swapit Demonstration
+description = Simple demonstration of NodeJs integration module using a form driven text swap.
+package = Nodejs
+version = '7.x-dev'
+core = 7.x
+
+dependencies[] = nodejs

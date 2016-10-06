@@ -1,0 +1,112 @@
+<?php
+
+/**
+ * Implements hook_nodejs_handlers_info().  This tells the nodejs module what
+ * our client listener is.
+ */
+function swapit_demo_nodejs_handlers_info() {
+  return array(
+    drupal_get_path('module', 'swapit_demo').'/swapit_demo.client.js',
+    
+  );
+}
+
+/**
+ * Implementation of hook_nodejs_user_channels
+ * In this instance we just give the swapit_demo channel to everyone.
+ */
+function swapit_demo_nodejs_user_channels($auth_user) {
+  $channels = array('swapit_demo');
+  return $channels;
+}
+
+/**
+ * Lets just throw it all on a page.
+ */
+function swapit_demo_menu() {
+  $items['swap'] = array(
+    'title' => t('SWAP IT!'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('swapit_demo_form'),
+    'access callback' => TRUE,
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/**
+ * Building our simple form.
+ */
+function swapit_demo_form($form, &$form_state) {
+  //grab the current global value for our header.
+  $default_message = variable_get('demo_message', 'Change Me!');
+  //This is the header we are going to change.  Just throwing it in the form
+  //for ease, but really it could live anywhere.
+  $form['stage'] = array(
+    '#markup' => '<h3 id="nodejs-selector">'.$default_message.'</h3>',
+  );
+
+  $form['user_message'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Node message.'),
+    '#size' => 40,
+    '#maxlength' => 80,
+    '#required' => TRUE,
+    '#description' => t('Enter some text to change the above header.  Limit is 80 chars.'),
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Swap that Header'),
+    '#submit' => array('swapit_demo_swap_submit'),
+    //adding ajax to keep the user submitting from suffering a pageload
+    '#ajax' => array(
+      'callback' => 'swapit_demo_swap_js',
+      'wrapper' => 'swapit-demo-form',
+      'method' => 'replace',
+    ),
+  );
+  return $form;
+}
+
+/**
+ * Our ajax callback.  Were replacing the form wrapper with the modified form
+ * itself.  Just after calling out actual submit function, that sends our message
+ * and performs the variable_set.
+ */
+function swapit_demo_swap_js($form, $form_state) {
+  swapit_demo_sendsomecustomevent(17);
+
+  /*$form['stage']['#markup'] = '<h3 id="nodejs-selector">'.check_plain($form_state['values']['user_message']).'</h3>';
+  $form['user_message']['#value'] = '';*/
+  return $form;
+}
+
+/**
+ * The submit function for our form. Where we fire the message.  Its not very
+ * pretty to have all this in the submit fucntion, but for the sake of
+ * demonstration it makes things a bit more obvious.
+ */
+function swapit_demo_swap_submit($form, &$form_state) {
+  
+  $user_msg = check_plain($form_state['values']['user_message']);
+  //just doing a quick variable set to store the string.
+  variable_set('demo_message', $user_msg);
+  //broadcasting the string to our listening javascript in waiting
+  $message = new stdClass();
+  $message->channel = 'swapit_demo';
+  $message->broadcast = TRUE;
+  $message->data['body'] = $user_msg;
+  $message->callback = 'swapIt';
+  nodejs_send_message($message);
+}
+function swapit_demo_sendsomecustomevent($uid) {
+  $message = (object) array(
+    'data' => (object) array(
+      'somecustomdata' => 'http://www.google.ca'
+    ),
+    'channel' => 'nodejs_user_' . $uid,
+    'callback' => 'myowncallback',
+  );
+  Nodejs::enqueueMessage($message);
+}
